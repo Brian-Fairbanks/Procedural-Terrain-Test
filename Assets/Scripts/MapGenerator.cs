@@ -15,7 +15,8 @@ public class MapGenerator : MonoBehaviour
 
     public float scale = 1f;
 
-    public const int mapChunkSize = 239;
+    public bool useFlatShading;
+
     [Range(0, 6)]
     public int previewLevelOfDetail;
     public bool enableFalloff;
@@ -36,6 +37,7 @@ public class MapGenerator : MonoBehaviour
     public bool autoUpdate;
 
     public TerrainType[] regions;
+    static MapGenerator instance;
 
     Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
     Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
@@ -48,6 +50,22 @@ public class MapGenerator : MonoBehaviour
 
     void Awake() {
         falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
+    }
+
+    // had no idea you could switch a variable get like this.
+    public static int mapChunkSize {
+        get {
+            if (instance == null) {
+                instance = FindObjectOfType<MapGenerator>();
+            }
+
+            if (instance.useFlatShading) {
+                return 95;
+            }
+            else {
+                return 239;
+            }
+        }
     }
 
     public void DrawMapInEditor()    {
@@ -65,7 +83,7 @@ public class MapGenerator : MonoBehaviour
             display.drawTexture(TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
         }
         else if (drawMode == DrawMode.MeshMap) {
-            display.drawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, previewLevelOfDetail), TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
+            display.drawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, previewLevelOfDetail, useFlatShading), TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
         }
         else if (drawMode == DrawMode.FalloffMap) {
             display.drawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(mapChunkSize)));
@@ -101,7 +119,7 @@ public class MapGenerator : MonoBehaviour
 
     // The actual map data generation, in the thread requested from above function
     void MeshDataThread(MapData mapData, int lod, Action<MeshData> callback) {
-        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, lod);
+        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, lod, useFlatShading);
         // make sure you dont have a race case
         lock (meshDataThreadInfoQueue) {
             meshDataThreadInfoQueue.Enqueue(new MapThreadInfo<MeshData>(callback, meshData));
