@@ -2,6 +2,7 @@
 #
 # Get latest from https://github.com/github/gitignore/blob/master/Unity.gitignore
 #
+Library/
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
@@ -61,7 +62,7 @@ sysinfo.txt
 
 # Crashlytics generated file
 crashlytics-build.properties
-Library/ArtifactDB
-Library/ArtifactDB
-Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
+Library/SourceAssetDB
+Library/ScriptAssemblies/Assembly-CSharp.pdb
 Library/ScriptAssemblies/Assembly-CSharp.dll
+Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
