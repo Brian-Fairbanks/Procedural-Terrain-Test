@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class EndlessTerrain : MonoBehaviour{
 
-    const float scale = 2f;
-
     //limit chunk updates to not happen every frame
     const float viewerMoveThresholdForChunkUpdate = 25f;
     const float sqrviewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
@@ -28,7 +26,7 @@ public class EndlessTerrain : MonoBehaviour{
     private void Start()    {
         maxViewDist = detailLevels[detailLevels.Length - 1].visibleDstthreshold;
         mapGenerator = FindObjectOfType<MapGenerator>();
-        chunkSize = MapGenerator.mapChunkSize - 1;
+        chunkSize = mapGenerator.mapChunkSize - 1;
         chunksVisibleInViewDistance = Mathf.RoundToInt(maxViewDist / chunkSize);
 
         //ensure that there is no movement related problems, and world generates as soon as it starts;
@@ -37,7 +35,7 @@ public class EndlessTerrain : MonoBehaviour{
 
     void Update()    {
         // check if the viewer has moved a certain distance before updating the world;
-        viewerPosition = new Vector2(viewer.position.x, viewer.position.z)/scale;
+        viewerPosition = new Vector2(viewer.position.x, viewer.position.z)/mapGenerator.terrainData.uniformScale;
         if ((viewerPositionOld - viewerPosition).sqrMagnitude > sqrviewerMoveThresholdForChunkUpdate) {
             UpdateVisibleChunks();
             viewerPositionOld = viewerPosition;
@@ -105,9 +103,9 @@ public class EndlessTerrain : MonoBehaviour{
             meshCollider = meshObject.AddComponent<MeshCollider>();
             meshRenderer.material =  material;
 
-            meshObject.transform.position = positionV3 * scale;
+            meshObject.transform.position = positionV3 * mapGenerator.terrainData.uniformScale;
             meshObject.transform.parent = parent;
-            meshObject.transform.localScale = Vector3.one * scale;
+            meshObject.transform.localScale = Vector3.one * mapGenerator.terrainData.uniformScale;
             // start with every chunk not visible, untill it loads in for the first time.
             SetVisible(false);
 
@@ -127,9 +125,6 @@ public class EndlessTerrain : MonoBehaviour{
         void OnMapDataReceived(MapData mapData) {
             this.mapData = mapData;
             mapDataReceived = true;
-
-            Texture2D texture = TextureGenerator.TextureFromColorMap(mapData.colorMap, MapGenerator.mapChunkSize, MapGenerator.mapChunkSize);
-            meshRenderer.material.mainTexture = texture;
 
             UpdateTerrainChunk();
         }

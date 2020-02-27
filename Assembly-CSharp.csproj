@@ -62,6 +62,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Data\NoiseData.cs" />
+    <Compile Include="Assets\Scripts\Data\TerrainData.cs" />
+    <Compile Include="Assets\Scripts\Data\TextureData.cs" />
+    <Compile Include="Assets\Scripts\Data\UpdatableData.cs" />
+    <Compile Include="Assets\Scripts\Data\scriptSamp.cs" />
     <Compile Include="Assets\Scripts\EndlessTerrain.cs" />
     <Compile Include="Assets\Scripts\FallOffGenerator.cs" />
     <Compile Include="Assets\Scripts\HidePreviewOnPlay.cs" />

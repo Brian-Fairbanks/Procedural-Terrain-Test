@@ -63,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Editor\MapGeneraterEditor.cs" />
+    <Compile Include="Assets\Editor\UpdatableDataEditor.cs" />
     <Reference Include="UnityEditor.TestRunner">
       <HintPath>C:/Users/akuma/Unity/Coding Addventures/Procedural Terrain Test/Library/ScriptAssemblies/UnityEditor.TestRunner.dll</HintPath>
     </Reference>
