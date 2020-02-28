@@ -177,6 +177,7 @@ public class MapGenerator : MonoBehaviour
         }
 
         textureData.ApplyToMaterial(terrainMaterial);  // this is not accounting for falloff map at the moment
+        textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
 
         return new MapData(noiseMap);
     }

@@ -21,7 +21,7 @@ public class TextureData : UpdatableData
         material.SetFloatArray("baseStartHeights", baseStartHeights);
 
         // adding this, along with the saved details to maintain this information after changes are made to the shader.
-        UpdateMeshHeights(material, savedMinHeight, savedMaxHeight);
+        //UpdateMeshHeights(material, savedMinHeight, savedMaxHeight);
     }
 
 
