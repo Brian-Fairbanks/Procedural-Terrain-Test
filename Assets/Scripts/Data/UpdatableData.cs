@@ -9,12 +9,14 @@ public class UpdatableData: ScriptableObject{
 
     protected virtual void OnValidate() {       // must be set up as protected virtual void, since noiseData also has an onValidate.  that way this one will be called in addition to the noise update
         if (autoUpdate) {
-            NotifyOfUpdatedValues();
+            UnityEditor.EditorApplication.update += NotifyOfUpdatedValues;
+
         }
     }
 
     // autoupdate when values are changed
     public void NotifyOfUpdatedValues() {
+        UnityEditor.EditorApplication.update -= NotifyOfUpdatedValues;
         if (OnValuesUpdated != null) {
             OnValuesUpdated();
         }

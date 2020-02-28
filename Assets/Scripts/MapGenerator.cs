@@ -175,6 +175,9 @@ public class MapGenerator : MonoBehaviour
                 }
             }
         }
+
+        textureData.ApplyToMaterial(terrainMaterial);  // this is not accounting for falloff map at the moment
+
         return new MapData(noiseMap);
     }
 

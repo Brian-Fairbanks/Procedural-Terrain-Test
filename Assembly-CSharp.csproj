@@ -75,6 +75,7 @@
     <Compile Include="Assets\Scripts\MeshGenerator.cs" />
     <Compile Include="Assets\Scripts\Noise.cs" />
     <Compile Include="Assets\Scripts\TextureGenerator.cs" />
+    <None Include="Assets\Scripts\Terrain.shader" />
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>C:/Users/akuma/Unity/Coding Addventures/Procedural Terrain Test/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>
     </Reference>
