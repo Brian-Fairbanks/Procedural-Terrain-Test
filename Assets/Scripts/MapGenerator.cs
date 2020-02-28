@@ -35,6 +35,10 @@ public class MapGenerator : MonoBehaviour
     /// Functions
     ///===================================================================
 
+    void Awake() {
+        textureData.ApplyToMaterial(terrainMaterial);  // this is not accounting for falloff map at the moment
+        textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
+    }
 
 
     // listens to editor, this will run when specific data points are changed, and the map needs to be updated.
@@ -72,6 +76,9 @@ public class MapGenerator : MonoBehaviour
     // check the draw mode, and draw a chunk as a preview in the editor.
     public void DrawMapInEditor()    {
         MapData mapData = generateMapData(Vector2.zero);
+
+        textureData.ApplyToMaterial(terrainMaterial);  // this is not accounting for falloff map at the moment
+        textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
 
         //locate whatever object has MapDisplay attached to it
         MapDisplay display = FindObjectOfType<MapDisplay>();
@@ -175,9 +182,6 @@ public class MapGenerator : MonoBehaviour
                 }
             }
         }
-
-        textureData.ApplyToMaterial(terrainMaterial);  // this is not accounting for falloff map at the moment
-        textureData.UpdateMeshHeights(terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
 
         return new MapData(noiseMap);
     }
