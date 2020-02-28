@@ -23,6 +23,8 @@ public class NoiseData : UpdatableData {
     //  Functions
     //================================================================================
 
+#if UNITY_EDITOR
+
     //setting max/min values
     protected override void OnValidate() {
         if (lacunarity < 1) { lacunarity = 1; }
@@ -30,5 +32,7 @@ public class NoiseData : UpdatableData {
 
         base.OnValidate(); // call back parent in updatableData
     }
+
+#endif
 
 }
