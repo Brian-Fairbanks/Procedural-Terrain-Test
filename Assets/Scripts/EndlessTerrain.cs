@@ -7,7 +7,9 @@ public class EndlessTerrain : MonoBehaviour{
     //limit chunk updates to not happen every frame
     const float viewerMoveThresholdForChunkUpdate = 25f;
     const float sqrviewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
+    const float colliderGenerationDstThreshold = 5;
 
+    public int colliderLODIndex;
     public LODInfo[] detailLevels;
     public static float maxViewDist;
 
@@ -23,6 +25,8 @@ public class EndlessTerrain : MonoBehaviour{
     Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>();
     static List<TerrainChunk> terrainChunksVisibleLastUpdate = new List<TerrainChunk>();
 
+
+
     private void Start()    {
         maxViewDist = detailLevels[detailLevels.Length - 1].visibleDstthreshold;
         mapGenerator = FindObjectOfType<MapGenerator>();
@@ -33,12 +37,19 @@ public class EndlessTerrain : MonoBehaviour{
         UpdateVisibleChunks();
     }
 
+
+
     void Update()    {
         // check if the viewer has moved a certain distance before updating the world;
         viewerPosition = new Vector2(viewer.position.x, viewer.position.z)/mapGenerator.terrainData.uniformScale;
         if ((viewerPositionOld - viewerPosition).sqrMagnitude > sqrviewerMoveThresholdForChunkUpdate) {
             UpdateVisibleChunks();
             viewerPositionOld = viewerPosition;
+        }
+        if (viewerPosition != viewerPositionOld){
+            foreach (TerrainChunk chunk in terrainChunksVisibleLastUpdate) {
+                chunk.UpdateCollisionChunk();
+            }
         }
     }
 
@@ -63,7 +74,7 @@ public class EndlessTerrain : MonoBehaviour{
                     //}
                 }
                 else                {
-                    terrainChunkDictionary.Add(viewedChunkCoord, new TerrainChunk(viewedChunkCoord, chunkSize, detailLevels, transform, mapMaterial));
+                    terrainChunkDictionary.Add(viewedChunkCoord, new TerrainChunk(viewedChunkCoord, chunkSize, detailLevels, transform, mapMaterial, colliderLODIndex));
                 }
             }
         }
@@ -83,15 +94,18 @@ public class EndlessTerrain : MonoBehaviour{
 
         LODInfo[] detailLevels;
         LODMesh[] lodMeshes;
-        LODMesh collisionLODMesh;
+        int colliderLODIndex;
 
         MapData mapData;
         bool mapDataReceived;
         int previousLODIndex = -1;
 
+        bool hasSetCollider = false;
+
         // Mothod to create a new terrain chunk.
-        public TerrainChunk(Vector2 coord, int size, LODInfo[] detailLevels, Transform parent, Material material)        {
+        public TerrainChunk(Vector2 coord, int size, LODInfo[] detailLevels, Transform parent, Material material, int colliderLODIndex)        {
             this.detailLevels = detailLevels;
+            this.colliderLODIndex = colliderLODIndex;
 
             position = coord * size;
             bounds = new Bounds(position, Vector2.one * size);
@@ -113,8 +127,9 @@ public class EndlessTerrain : MonoBehaviour{
             lodMeshes = new LODMesh[detailLevels.Length];
             for (int i = 0; i<detailLevels.Length; i++) {
                 lodMeshes[i] = new LODMesh(detailLevels[i].lod, UpdateTerrainChunk);
-                if (detailLevels[i].userForColider == true) {
-                    collisionLODMesh = lodMeshes[i];
+                lodMeshes[i].updateCallback += UpdateTerrainChunk;
+                if(i == colliderLODIndex) {
+                    lodMeshes[i].updateCallback += UpdateCollisionChunk;
                 }
             }
 
@@ -162,15 +177,6 @@ public class EndlessTerrain : MonoBehaviour{
                             lodMesh.RequestMesh(mapData);
                         }
                     }
-                    // only set colision on the mesh if at full detail
-                    if (lodIndex == 0) {
-                        if (collisionLODMesh.hasMesh) {
-                            meshCollider.sharedMesh = collisionLODMesh.mesh;
-                        }
-                        else if (!collisionLODMesh.hasRequestedMesh) {
-                            collisionLODMesh.RequestMesh(mapData);
-                        }
-                    }
                     // add to visible last update
                     terrainChunksVisibleLastUpdate.Add(this);
                 }
@@ -185,7 +191,33 @@ public class EndlessTerrain : MonoBehaviour{
         public bool IsVisible()        {
             return meshObject.activeSelf;
         }
+
+
+
+        // creation of collider will need to be checked more often than detail, hence in a seperate thread.
+        // this will allow it to run later, and not have to worry about accidentally stepping off of collision mesh.
+        public void UpdateCollisionChunk() {
+            if (!hasSetCollider) { }
+            float sqrDstFromViewerToEdge = bounds.SqrDistance(viewerPosition);
+
+            // since this is much closer than the update terrain chunk, the collision data is going to be needed much more urgently.  CALL IT NOW!
+            if (sqrDstFromViewerToEdge < detailLevels[colliderLODIndex].sqrVisableDistThreshold) {
+                if (!lodMeshes[colliderLODIndex].hasRequestedMesh) {
+                    lodMeshes[colliderLODIndex].RequestMesh(mapData);
+                }
+            }
+
+            if (sqrDstFromViewerToEdge < colliderGenerationDstThreshold * colliderGenerationDstThreshold) {
+                if (lodMeshes[colliderLODIndex].hasMesh) {
+                    meshCollider.sharedMesh = lodMeshes[colliderLODIndex].mesh;
+                    hasSetCollider = true;
+                }
+            }
+        }
+
+
     }
+
 
     //Level of Detail Mesh
     class LODMesh {
@@ -195,11 +227,14 @@ public class EndlessTerrain : MonoBehaviour{
         int lod;
 
         // fixing problem.  By reducing update to run on movement, Update is not called after the mesh loads. Had to bee added to LOD mesh too.
-        System.Action updateCallback;
+        //System.Action updateCallback;
+        // fixing problem again, this now needs to run 2 callbacks
+        public event System.Action updateCallback;
+
 
         public LODMesh(int lod, System.Action updateCallback) {
             this.lod = lod;
-            this.updateCallback = updateCallback;
+            //this.updateCallback = updateCallback; - moved to terrain chunk creation
         }
 
 
@@ -221,6 +256,11 @@ public class EndlessTerrain : MonoBehaviour{
         public int lod;
         // the distance for each level of detail to switch between higher or lower meshes
         public float visibleDstthreshold;
-        public bool userForColider;
+
+        public float sqrVisableDistThreshold {
+            get{
+                return visibleDstthreshold * visibleDstthreshold;
+            }
+        }
     }
 }
