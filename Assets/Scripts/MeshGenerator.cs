@@ -6,8 +6,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MeshGenerator
-{
+public class MeshGenerator{
+
+    public const int numSupportedLODs = 5;
+    public const int numSupportedFlatChunkSizes = 3;
+    public const int numSupportedChunkSizes = 9;
+    public static readonly int[] supportedFlatChunkSizes = { 48, 72, 96};
+    public static readonly int[] supportedChunkSizes = { 48, 72, 96, 120, 144, 168, 192, 216, 240 };
+
+
+
     public static MeshData GenerateTerrainMesh(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail, bool useFlatShading)
     {
         //each thread using the same animation curve causes problems...

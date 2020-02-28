@@ -253,6 +253,7 @@ public class EndlessTerrain : MonoBehaviour{
 
     [System.Serializable]
     public struct LODInfo {
+        [Range(0,MeshGenerator.numSupportedLODs-1)]
         public int lod;
         // the distance for each level of detail to switch between higher or lower meshes
         public float visibleDstthreshold;

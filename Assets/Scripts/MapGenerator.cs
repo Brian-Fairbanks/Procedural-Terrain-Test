@@ -18,7 +18,12 @@ public class MapGenerator : MonoBehaviour
 
     public Material terrainMaterial;
 
-    [Range(0, 6)]
+    [Range(0, MeshGenerator.numSupportedChunkSizes - 1)]
+    public int chunkSizeIndex;
+    [Range(0, MeshGenerator.numSupportedFlatChunkSizes - 1)]
+    public int chunkFlatSizeIndex;
+
+    [Range(0, MeshGenerator.numSupportedLODs-1)]
     public int previewLevelOfDetail;
 
     // automatically regenerate when changing values - passing to MapGeneraterEditor
@@ -62,10 +67,10 @@ public class MapGenerator : MonoBehaviour
     public int mapChunkSize {
         get {
             if (terrainData.useFlatShading) {
-                return 95;
+                return MeshGenerator.supportedFlatChunkSizes[chunkFlatSizeIndex]-1;
             }
             else {
-                return 239;
+                return MeshGenerator.supportedChunkSizes[chunkSizeIndex] - 1;
             }
         }
     }
