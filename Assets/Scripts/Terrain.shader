@@ -34,6 +34,8 @@ Shader "Custom/Terrain"
 		sampler2D testTexture;
 		float testScale;
 
+		UNITY_DECLARE_TEX2DARRAY(baseTextures);
+
 
         struct Input
         {
@@ -49,26 +51,43 @@ Shader "Custom/Terrain"
 
 
 
-        void surf (Input IN, inout SurfaceOutputStandard o)
-        {
-			float heightPercent = inverseLerp(minHeight, maxHeight, IN.worldPos.y);
-			for (int i = 0; i< layerCount; i++){
-				float drawStrength = inverseLerp(-baseBlends[i]/2 - epsilon, baseBlends[i]/2, heightPercent - baseStartHeights[i]);
-				o.Albedo = (o.Albedo *(1-drawStrength)) + (baseColors[i] * drawStrength);
-			}
+		float3 triPlaner(float3 worldPos, float3 scale, float3 blendAxes, int textureIndex){
 
 			//o.Albedo = tex2D(testTexture, IN.worldPos.xz / testScale);	//XZ coordinates look fine on flat surfaces, but stretch when scaling up mountains
 			//o.Albedo = tex2D(testTexture, IN.worldPos.xy / testScale);	//XY looks fine going up mountains, but stretches off into distance along y axis
 
 			//Tri-Planer Maping will correct the above problem
-			float3 scaledWorldPos = IN.worldPos / testScale;
+			float3 scaledWorldPos = worldPos / scale;
+
+			//float3 xProjection = tex2D(testTexture, scaledWorldPos.yz) * blendAxes.x;
+			//float3 yProjection = tex2D(testTexture, scaledWorldPos.xz) * blendAxes.y;
+			//float3 zProjection = tex2D(testTexture, scaledWorldPos.xy) * blendAxes.z;
+			// these were reworked since we are using a texture ARRAY now...
+			float3 xProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(scaledWorldPos.y, scaledWorldPos.z, textureIndex)) * blendAxes.x;
+			float3 yProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(scaledWorldPos.x, scaledWorldPos.z, textureIndex)) * blendAxes.y;
+			float3 zProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(scaledWorldPos.x, scaledWorldPos.y, textureIndex)) * blendAxes.z;
+
+			
+			
+			// adding these 3 together can possibly excede color values of 1, making it brighter.  This is corrected by averaging the blendAxes in the surf function before calculating projections
+			return xProjection + yProjection + zProjection;
+		}
+
+
+
+        void surf (Input IN, inout SurfaceOutputStandard o)        {
 			float3 blendAxes = abs(IN.worldNormal);
 			blendAxes / blendAxes.x + blendAxes.y + blendAxes.z;
-			float3 xProjection = tex2D(testTexture, scaledWorldPos.yz) * blendAxes.x;
-			float3 yProjection = tex2D(testTexture, scaledWorldPos.xz) * blendAxes.y;
-			float3 zProjection = tex2D(testTexture, scaledWorldPos.xy) * blendAxes.z;
-			// adding these 3 together can possibly excede color values of 1, making it brighter.  This is corrected by averaging the blendAxes before calculating projections
-			//o.Albedo = xProjection + yProjection + zProjection;
+			float heightPercent = inverseLerp(minHeight, maxHeight, IN.worldPos.y);
+
+			for (int i = 0; i< layerCount; i++){
+				float drawStrength = inverseLerp(-baseBlends[i]/2 - epsilon, baseBlends[i]/2, heightPercent - baseStartHeights[i]);
+
+				float3 baseColor = baseColors[i] * baseColorStrengths[i];
+				float3 textureColor = triPlaner(IN.worldPos, baseTextureScales[i], blendAxes, i) * (1- baseColorStrengths[i]);
+
+				o.Albedo = (o.Albedo *(1-drawStrength)) + (baseColor+textureColor) * drawStrength;
+			}
         }
         ENDCG
     }
