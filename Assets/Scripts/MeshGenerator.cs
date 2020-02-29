@@ -8,18 +8,9 @@ using UnityEngine;
 
 public class MeshGenerator{
 
-    public const int numSupportedLODs = 5;
-    public const int numSupportedFlatChunkSizes = 3;
-    public const int numSupportedChunkSizes = 9;
-    public static readonly int[] supportedFlatChunkSizes = { 48, 72, 96};
-    public static readonly int[] supportedChunkSizes = { 48, 72, 96, 120, 144, 168, 192, 216, 240 };
+    public static MeshData GenerateTerrainMesh(float[,] heightMap, MeshSettings meshSettings, int levelOfDetail)    {
 
 
-
-    public static MeshData GenerateTerrainMesh(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail, bool useFlatShading)
-    {
-        //each thread using the same animation curve causes problems...
-        AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
         int meshSimplificationIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
 
         int borderedSize = heightMap.GetLength(0);
@@ -31,7 +22,7 @@ public class MeshGenerator{
 
         int verticesPerLine = (meshSize - 1) / meshSimplificationIncrement + 1;
 
-        MeshData meshData = new MeshData(verticesPerLine, useFlatShading);
+        MeshData meshData = new MeshData(verticesPerLine, meshSettings.useFlatShading);
         int[,] vertexIndicesMap = new int[borderedSize,borderedSize];
         int meshVertexIndex = 0;
         int borderVertexIndex = -1;
@@ -56,11 +47,10 @@ public class MeshGenerator{
         for (int y=0; y<borderedSize; y+=meshSimplificationIncrement)        {
             for (int x=0; x<borderedSize; x+=meshSimplificationIncrement)            {
                 int vertexIndex = vertexIndicesMap[x, y];
-                Vector2 percent = new Vector2((x - meshSimplificationIncrement) / (float)meshSize, (y - meshSimplificationIncrement) / (float)meshSize);
+                Vector2 percent = new Vector2((x - meshSimplificationIncrement) / (float)meshSize, (y + meshSimplificationIncrement) / (float)meshSize);
 
-                float height = heightCurve.Evaluate(heightMap[x, y]) * heightMultiplier;
-                Vector3 vertexPos = new Vector3(topLeftX + percent.x* meshSizeUnsimplified, height, topLeftZ - percent.y* meshSizeUnsimplified); // topLeftX + x so that we are centering the mesh
-
+                float height = heightMap[x, y];
+                Vector3 vertexPos = new Vector3((topLeftX + percent.x* meshSizeUnsimplified) * meshSettings.meshScale, height, (topLeftZ - percent.y* meshSizeUnsimplified) * meshSettings.meshScale); // topLeftX + x so that we are centering the mesh
                 meshData.AddVertex(vertexPos, percent, vertexIndex);
 
                 // you must add 2 triangles
