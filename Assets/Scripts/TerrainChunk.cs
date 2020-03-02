@@ -157,25 +157,24 @@ public class TerrainChunk{
     // creation of collider will need to be checked more often than detail, hence in a seperate thread.
     // this will allow it to run later, and not have to worry about accidentally stepping off of collision mesh.
     public void UpdateCollisionChunk() {
-        if (!hasSetCollider) { }
-        float sqrDstFromViewerToEdge = bounds.SqrDistance(viewerPosition);
+        if (!hasSetCollider) {
+            float sqrDstFromViewerToEdge = bounds.SqrDistance(viewerPosition);
 
-        // since this is much closer than the update terrain chunk, the collision data is going to be needed much more urgently.  CALL IT NOW!
-        if (sqrDstFromViewerToEdge < detailLevels[colliderLODIndex].sqrVisableDistThreshold) {
-            if (!lodMeshes[colliderLODIndex].hasRequestedMesh) {
-                lodMeshes[colliderLODIndex].RequestMesh(heightMap, meshSettings);
+            // since this is much closer than the update terrain chunk, the collision data is going to be needed much more urgently.  CALL IT NOW!
+            if (sqrDstFromViewerToEdge < detailLevels[colliderLODIndex].sqrVisableDistThreshold) {
+                if (!lodMeshes[colliderLODIndex].hasRequestedMesh) {
+                    lodMeshes[colliderLODIndex].RequestMesh(heightMap, meshSettings);
+                }
             }
-        }
 
-        if (sqrDstFromViewerToEdge < colliderGenerationDstThreshold * colliderGenerationDstThreshold) {
-            if (lodMeshes[colliderLODIndex].hasMesh) {
-                meshCollider.sharedMesh = lodMeshes[colliderLODIndex].mesh;
-                hasSetCollider = true;
+            if (sqrDstFromViewerToEdge < colliderGenerationDstThreshold * colliderGenerationDstThreshold) {
+                if (lodMeshes[colliderLODIndex].hasMesh) {
+                    meshCollider.sharedMesh = lodMeshes[colliderLODIndex].mesh;
+                    hasSetCollider = true;
+                }
             }
         }
     }
-
-
 }
 
 
